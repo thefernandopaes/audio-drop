@@ -4,8 +4,15 @@ FROM node:18-alpine
 RUN apk add --no-cache \
     python3 \
     py3-pip \
-    ffmpeg \
-    && pip3 install --no-cache-dir yt-dlp
+    py3-virtualenv \
+    ffmpeg
+
+# Criar virtual environment e instalar yt-dlp
+RUN python3 -m venv /opt/venv \
+    && /opt/venv/bin/pip install --no-cache-dir yt-dlp
+
+# Adicionar o venv ao PATH
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Criar diretório da aplicação
 WORKDIR /app
