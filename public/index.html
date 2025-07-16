@@ -5,89 +5,205 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AudioDrop - Baixar Áudio MP3</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .loading {
-            animation: spin 1s linear infinite;
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'spin-slow': 'spin 2s linear infinite',
+                        'pulse-slow': 'pulse 3s ease-in-out infinite',
+                        'bounce-light': 'bounce 2s infinite',
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.4s ease-out'
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        }
+                    }
+                }
+            }
         }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-shadow {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .input-glow:focus {
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        .btn-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-gradient:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="gradient-bg min-h-screen">
     <div class="container mx-auto px-4 py-8">
-        <div class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
-            <div class="text-center mb-6">
-                <h1 class="text-2xl font-bold text-gray-800 mb-2">AudioDrop</h1>
-                <p class="text-gray-600">Baixe áudio MP3 de vídeos online</p>
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg mb-4">
+                <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
+                </svg>
             </div>
+            <h1 class="text-4xl font-bold text-white mb-2">AudioDrop</h1>
+            <p class="text-indigo-100 text-lg">Transforme vídeos em áudio MP3 instantaneamente</p>
+        </div>
 
-            <form id="downloadForm" class="space-y-4">
+        <!-- Main Card -->
+        <div class="max-w-lg mx-auto bg-white rounded-2xl card-shadow p-8 animate-fade-in">
+            <form id="downloadForm" class="space-y-6">
                 <div>
-                    <label for="url" class="block text-sm font-medium text-gray-700 mb-2">
-                        URL do vídeo
+                    <label for="url" class="block text-sm font-semibold text-gray-700 mb-3">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                            </svg>
+                            Cole a URL do vídeo
+                        </div>
                     </label>
-                    <input 
-                        type="url" 
-                        id="url" 
-                        name="url" 
-                        placeholder="https://www.youtube.com/watch?v=..."
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        required
-                    >
+                    <div class="relative">
+                        <input 
+                            type="url" 
+                            id="url" 
+                            name="url" 
+                            placeholder="https://www.youtube.com/watch?v=..."
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 input-glow transition-all duration-300 pr-12"
+                            required
+                        >
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                            </svg>
+                        </div>
+                    </div>
                 </div>
 
                 <button 
                     type="submit" 
                     id="downloadBtn"
-                    class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="w-full btn-gradient text-white py-4 px-6 rounded-xl font-semibold text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                    <span id="btnText">Baixar MP3</span>
-                    <div id="loadingSpinner" class="loading border-2 border-white border-t-transparent rounded-full w-4 h-4 mx-auto hidden"></div>
+                    <div class="flex items-center justify-center gap-3">
+                        <svg id="downloadIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <span id="btnText">Baixar MP3</span>
+                        <div id="loadingSpinner" class="animate-spin border-2 border-white border-t-transparent rounded-full w-6 h-6 hidden"></div>
+                    </div>
                 </button>
             </form>
 
-            <div id="status" class="mt-6 hidden">
-                <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+            <!-- Status Messages -->
+            <div id="status" class="mt-6 hidden animate-slide-up">
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-indigo-500 rounded-lg p-4">
                     <div class="flex items-center">
-                        <div class="loading border-2 border-blue-600 border-t-transparent rounded-full w-4 h-4 mr-3"></div>
-                        <span class="text-blue-800">Processando...</span>
-                    </div>
-                    <div class="mt-2 text-sm text-blue-600">
-                        Isso pode levar alguns segundos...
+                        <div class="animate-spin border-2 border-indigo-600 border-t-transparent rounded-full w-5 h-5 mr-3"></div>
+                        <div>
+                            <p class="text-indigo-800 font-medium">Processando seu áudio...</p>
+                            <p class="text-indigo-600 text-sm mt-1">Extraindo o melhor áudio possível ✨</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div id="result" class="mt-6 hidden">
-                <div class="bg-green-50 border border-green-200 rounded-md p-4">
+            <div id="result" class="mt-6 hidden animate-slide-up">
+                <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-lg p-4">
                     <div class="flex items-center justify-between">
-                        <span class="text-green-800 font-medium">Pronto!</span>
+                        <div class="flex items-center">
+                            <div class="bg-green-100 rounded-full p-2 mr-3">
+                                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-green-800 font-semibold">Pronto para download!</p>
+                                <p class="text-green-600 text-sm">Seu áudio MP3 está pronto 🎵</p>
+                            </div>
+                        </div>
                         <button 
                             id="downloadLink"
-                            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
+                            class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-all duration-300 hover:scale-105 shadow-lg font-medium"
                         >
-                            Download
+                            <div class="flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                Download
+                            </div>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div id="error" class="mt-6 hidden">
-                <div class="bg-red-50 border border-red-200 rounded-md p-4">
+            <div id="error" class="mt-6 hidden animate-slide-up">
+                <div class="bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-500 rounded-lg p-4">
                     <div class="flex items-center">
-                        <svg class="w-5 h-5 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <span class="text-red-800" id="errorMessage">Erro ao processar</span>
+                        <div class="bg-red-100 rounded-full p-2 mr-3">
+                            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-red-800 font-medium">Ops! Algo deu errado</p>
+                            <p class="text-red-600 text-sm mt-1" id="errorMessage">Tente novamente em alguns segundos</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="max-w-md mx-auto mt-8 text-center text-sm text-gray-500">
-            <p>⚠️ Use apenas com conteúdo que você tem direito de baixar</p>
+        <!-- Features -->
+        <div class="max-w-4xl mx-auto mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 text-center text-white">
+                <div class="inline-flex items-center justify-center w-12 h-12 bg-white/20 rounded-full mb-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+                <h3 class="font-semibold mb-2">Super Rápido</h3>
+                <p class="text-sm text-indigo-100">Converte vídeos em segundos</p>
+            </div>
+            
+            <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 text-center text-white">
+                <div class="inline-flex items-center justify-center w-12 h-12 bg-white/20 rounded-full mb-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="font-semibold mb-2">Alta Qualidade</h3>
+                <p class="text-sm text-indigo-100">Áudio MP3 cristalino</p>
+            </div>
+            
+            <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 text-center text-white">
+                <div class="inline-flex items-center justify-center w-12 h-12 bg-white/20 rounded-full mb-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                </div>
+                <h3 class="font-semibold mb-2">100% Seguro</h3>
+                <p class="text-sm text-indigo-100">Seus dados protegidos</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="max-w-md mx-auto mt-12 text-center text-white/80">
+            <p class="text-sm">⚠️ Use apenas com conteúdo que você tem direito de baixar</p>
+            <p class="text-xs mt-2 text-white/60">Funciona com YouTube, Vimeo, SoundCloud e muito mais</p>
         </div>
     </div>
 
@@ -98,6 +214,7 @@
                 this.urlInput = document.getElementById('url');
                 this.downloadBtn = document.getElementById('downloadBtn');
                 this.btnText = document.getElementById('btnText');
+                this.downloadIcon = document.getElementById('downloadIcon');
                 this.loadingSpinner = document.getElementById('loadingSpinner');
                 this.statusDiv = document.getElementById('status');
                 this.resultDiv = document.getElementById('result');
@@ -113,6 +230,16 @@
 
             init() {
                 this.form.addEventListener('submit', this.handleSubmit.bind(this));
+                
+                // Adicionar efeitos visuais ao input
+                this.urlInput.addEventListener('paste', () => {
+                    setTimeout(() => {
+                        this.urlInput.style.borderColor = '#10b981';
+                        setTimeout(() => {
+                            this.urlInput.style.borderColor = '';
+                        }, 1000);
+                    }, 100);
+                });
             }
 
             async handleSubmit(e) {
@@ -165,7 +292,6 @@
                         this.stopStatusCheck();
                         this.setLoading(false);
                     }
-                    // Se ainda está processando, continua verificando
 
                 } catch (error) {
                     this.showError('Erro ao verificar status');
@@ -177,7 +303,7 @@
             startStatusCheck() {
                 this.statusInterval = setInterval(() => {
                     this.checkStatus();
-                }, 2000); // Verifica a cada 2 segundos
+                }, 2000);
             }
 
             stopStatusCheck() {
@@ -191,10 +317,12 @@
                 this.downloadBtn.disabled = loading;
                 
                 if (loading) {
-                    this.btnText.classList.add('hidden');
+                    this.btnText.textContent = 'Processando...';
+                    this.downloadIcon.classList.add('hidden');
                     this.loadingSpinner.classList.remove('hidden');
                 } else {
-                    this.btnText.classList.remove('hidden');
+                    this.btnText.textContent = 'Baixar MP3';
+                    this.downloadIcon.classList.remove('hidden');
                     this.loadingSpinner.classList.add('hidden');
                 }
             }
