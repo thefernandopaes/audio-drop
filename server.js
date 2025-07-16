@@ -29,6 +29,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// Contador de downloads
+let downloadCount = 0;
+
 // Rate limiting mais permissivo
 const limiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutos
@@ -40,6 +43,14 @@ const limiter = rateLimit({
 });
 
 app.use('/api/download', limiter);
+
+// Nova rota para obter estatísticas
+app.get('/api/stats', (req, res) => {
+  res.json({
+    totalDownloads: downloadCount,
+    status: 'active'
+  });
+});
 
 // Validação de URL
 function isValidUrl(string) {
@@ -115,9 +126,13 @@ app.post('/api/download', async (req, res) => {
         
         fileStream.pipe(res);
         
+        // Incrementar contador quando download for bem-sucedido
+        downloadCount++;
+        logger.info(`Download #${downloadCount} concluído: ${audioFile}`);
+        
         // Limpar após enviar
         fileStream.on('end', () => {
-          logger.info('Download concluído, limpando arquivos temporários');
+          logger.info('Arquivo enviado, limpando arquivos temporários');
           setTimeout(() => {
             fs.rmSync(tempDir, { recursive: true, force: true });
           }, 1000);

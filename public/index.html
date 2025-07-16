@@ -132,7 +132,8 @@
                             </div>
                             <div>
                                 <p class="text-green-800 font-semibold">Pronto para download!</p>
-                                <p class="text-green-600 text-sm">Seu áudio MP3 foi baixado com sucesso🎵</p>
+                                <p class="text-green-600 text-sm">Seu áudio MP3 foi baixado com sucesso 🎵</p>
+                                <p class="text-green-500 text-xs mt-1">Cole outra URL para baixar mais áudios!</p>
                             </div>
                         </div>
                         <button 
@@ -202,6 +203,10 @@
 
         <!-- Footer -->
         <div class="max-w-md mx-auto mt-12 text-center text-white/80">
+            <div class="bg-white/10 backdrop-blur-md rounded-xl p-4 mb-4">
+                <p class="text-sm font-medium">📊 Estatísticas</p>
+                <p class="text-lg font-bold" id="downloadCounter">🎵 Downloads realizados: <span id="countNumber">Carregando...</span></p>
+            </div>
             <p class="text-sm">⚠️ Use apenas com conteúdo que você tem direito de baixar</p>
             <p class="text-xs mt-2 text-white/60">Funciona com YouTube, Vimeo, SoundCloud e muito mais</p>
         </div>
@@ -221,6 +226,7 @@
                 this.errorDiv = document.getElementById('error');
                 this.downloadLink = document.getElementById('downloadLink');
                 this.errorMessage = document.getElementById('errorMessage');
+                this.countNumber = document.getElementById('countNumber');
                 
                 this.currentJobId = null;
                 this.statusInterval = null;
@@ -231,6 +237,14 @@
             init() {
                 this.form.addEventListener('submit', this.handleSubmit.bind(this));
                 
+                // Carregar contador inicial
+                this.loadDownloadCount();
+                
+                // Atualizar contador a cada 30 segundos
+                setInterval(() => {
+                    this.loadDownloadCount();
+                }, 30000);
+                
                 // Adicionar efeitos visuais ao input
                 this.urlInput.addEventListener('paste', () => {
                     setTimeout(() => {
@@ -240,6 +254,16 @@
                         }, 1000);
                     }, 100);
                 });
+            }
+
+            async loadDownloadCount() {
+                try {
+                    const response = await fetch('/api/stats');
+                    const data = await response.json();
+                    this.countNumber.textContent = data.totalDownloads.toLocaleString();
+                } catch (error) {
+                    this.countNumber.textContent = '---';
+                }
             }
 
             async handleSubmit(e) {
@@ -294,6 +318,13 @@
                     
                     this.showSuccess();
                     this.setLoading(false);
+                    
+                    // RESETAR O INPUT
+                    this.urlInput.value = '';
+                    this.urlInput.focus();
+                    
+                    // Atualizar contador
+                    this.loadDownloadCount();
 
                 } catch (error) {
                     this.showError(error.message);
