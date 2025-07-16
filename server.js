@@ -50,18 +50,25 @@ let downloadQueue;
 // Inicialização do Redis
 async function initializeRedis() {
   try {
-    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+    const redisUrl = process.env.REDIS_URL;
+    
+    if (!redisUrl) {
+      logger.warn('REDIS_URL não configurada, rodando sem cache');
+      return false;
+    }
+    
     logger.info(`Tentando conectar ao Redis: ${redisUrl}`);
     
     redisClient = Redis.createClient({
       url: redisUrl,
       socket: {
-        reconnectStrategy: (retries) => Math.min(retries * 50, 500)
+        reconnectStrategy: false, // Não tentar reconectar automaticamente
+        connectTimeout: 5000
       }
     });
 
     redisClient.on('error', (err) => {
-      logger.error('Erro no Redis:', err);
+      logger.error('Erro no Redis:', err.message);
     });
 
     redisClient.on('connect', () => {
@@ -76,7 +83,8 @@ async function initializeRedis() {
     logger.info('Redis e Queue inicializados com sucesso');
     return true;
   } catch (error) {
-    logger.error('Erro ao inicializar Redis:', error);
+    logger.error('Erro ao inicializar Redis:', error.message);
+    logger.warn('Continuando sem Redis...');
     return false;
   }
 }
