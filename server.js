@@ -16,8 +16,6 @@ const logger = winston.createLogger({
     winston.format.json()
   ),
   transports: [
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' }),
     new winston.transports.Console()
   ]
 });
@@ -25,27 +23,63 @@ const logger = winston.createLogger({
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Redis client para cache
-const redisClient = Redis.createClient(process.env.REDIS_URL);
-
-// Queue para processar downloads
-const downloadQueue = new Queue('download queue', process.env.REDIS_URL);
+// Trust proxy para Railway
+app.set('trust proxy', true);
 
 // Middlewares
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Rate limiting
+// Rate limiting configurado para Railway
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
   max: 10, // limite de 10 requests por IP
   message: 'Muitas tentativas. Tente novamente em 15 minutos.',
   standardHeaders: true,
   legacyHeaders: false,
+  trustProxy: true
 });
 
 app.use('/api', limiter);
+
+// Redis client para cache
+let redisClient;
+let downloadQueue;
+
+// Inicialização do Redis
+async function initializeRedis() {
+  try {
+    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+    logger.info(`Tentando conectar ao Redis: ${redisUrl}`);
+    
+    redisClient = Redis.createClient({
+      url: redisUrl,
+      socket: {
+        reconnectStrategy: (retries) => Math.min(retries * 50, 500)
+      }
+    });
+
+    redisClient.on('error', (err) => {
+      logger.error('Erro no Redis:', err);
+    });
+
+    redisClient.on('connect', () => {
+      logger.info('Conectado ao Redis');
+    });
+
+    await redisClient.connect();
+    
+    // Queue para processar downloads
+    downloadQueue = new Queue('download queue', redisUrl);
+    
+    logger.info('Redis e Queue inicializados com sucesso');
+    return true;
+  } catch (error) {
+    logger.error('Erro ao inicializar Redis:', error);
+    return false;
+  }
+}
 
 // Validação de URL
 function isValidUrl(string) {
@@ -60,62 +94,102 @@ function isValidUrl(string) {
 // Função para extrair áudio usando yt-dlp
 function extractAudio(url, outputPath) {
   return new Promise((resolve, reject) => {
-    const command = `yt-dlp -x --audio-format mp3 --output "${outputPath}/%(title)s.%(ext)s" "${url}"`;
-    
-    exec(command, (error, stdout, stderr) => {
+    // Verificar se yt-dlp está disponível
+    exec('which yt-dlp', (error) => {
       if (error) {
-        logger.error('Erro no yt-dlp:', error);
-        reject(error);
+        logger.error('yt-dlp não encontrado');
+        reject(new Error('yt-dlp não está instalado'));
         return;
       }
       
-      // Extrair o nome do arquivo da saída
-      const match = stdout.match(/\[ExtractAudio\] Destination: (.+)/);
-      if (match) {
-        resolve(match[1]);
-      } else {
-        resolve(stdout);
-      }
+      const command = `yt-dlp -x --audio-format mp3 --output "${outputPath}/%(title)s.%(ext)s" "${url}"`;
+      
+      logger.info(`Executando comando: ${command}`);
+      
+      exec(command, { timeout: 60000 }, (error, stdout, stderr) => {
+        logger.info(`stdout: ${stdout}`);
+        logger.info(`stderr: ${stderr}`);
+        
+        if (error) {
+          logger.error('Erro no yt-dlp:', error);
+          logger.error('stderr:', stderr);
+          reject(new Error(`Erro no yt-dlp: ${error.message}`));
+          return;
+        }
+        
+        // Extrair o nome do arquivo da saída
+        const match = stdout.match(/\[ExtractAudio\] Destination: (.+)/);
+        if (match) {
+          resolve(match[1]);
+        } else {
+          // Tentar encontrar arquivos MP3 na pasta
+          const fs = require('fs');
+          try {
+            const files = fs.readdirSync(outputPath).filter(f => f.endsWith('.mp3'));
+            if (files.length > 0) {
+              resolve(path.join(outputPath, files[0]));
+            } else {
+              reject(new Error('Nenhum arquivo MP3 encontrado'));
+            }
+          } catch (fsError) {
+            reject(new Error('Erro ao listar arquivos'));
+          }
+        }
+      });
     });
   });
 }
 
 // Processamento da Queue
-downloadQueue.process(async (job) => {
-  const { url, jobId } = job.data;
-  
-  try {
-    logger.info(`Iniciando download: ${url}`);
-    
-    const outputDir = path.join(__dirname, 'downloads');
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
-    }
-    
-    const audioFile = await extractAudio(url, outputDir);
-    
-    // Cache do resultado
-    await redisClient.setex(`download:${jobId}`, 3600, JSON.stringify({
-      status: 'completed',
-      file: audioFile,
-      timestamp: Date.now()
-    }));
-    
-    logger.info(`Download concluído: ${audioFile}`);
-    return { success: true, file: audioFile };
-    
-  } catch (error) {
-    logger.error(`Erro no download: ${error.message}`);
-    
-    await redisClient.setex(`download:${jobId}`, 3600, JSON.stringify({
-      status: 'failed',
-      error: error.message,
-      timestamp: Date.now()
-    }));
-    
-    throw error;
+async function setupQueue() {
+  if (!downloadQueue) {
+    logger.error('Queue não inicializada');
+    return;
   }
-});
+
+  downloadQueue.process(async (job) => {
+    const { url, jobId } = job.data;
+    
+    try {
+      logger.info(`Iniciando download: ${url}`);
+      
+      const outputDir = path.join(__dirname, 'downloads');
+      if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+        logger.info('Pasta downloads criada');
+      }
+      
+      const audioFile = await extractAudio(url, outputDir);
+      
+      // Cache do resultado
+      if (redisClient && redisClient.isOpen) {
+        await redisClient.setex(`download:${jobId}`, 3600, JSON.stringify({
+          status: 'completed',
+          file: audioFile,
+          timestamp: Date.now()
+        }));
+      }
+      
+      logger.info(`Download concluído: ${audioFile}`);
+      return { success: true, file: audioFile };
+      
+    } catch (error) {
+      logger.error(`Erro no download: ${error.message}`);
+      logger.error(`Stack trace: ${error.stack}`);
+      
+      // Cache do erro
+      if (redisClient && redisClient.isOpen) {
+        await redisClient.setex(`download:${jobId}`, 3600, JSON.stringify({
+          status: 'failed',
+          error: error.message,
+          timestamp: Date.now()
+        }));
+      }
+      
+      throw error;
+    }
+  });
+}
 
 // Rotas da API
 app.post('/api/download', async (req, res) => {
@@ -126,6 +200,12 @@ app.post('/api/download', async (req, res) => {
   }
   
   try {
+    // Verificar se Redis está conectado
+    if (!redisClient || !redisClient.isOpen) {
+      logger.error('Redis não está conectado');
+      return res.status(500).json({ error: 'Serviço temporariamente indisponível' });
+    }
+    
     // Verificar cache
     const cacheKey = `url:${Buffer.from(url).toString('base64')}`;
     const cached = await redisClient.get(cacheKey);
@@ -137,6 +217,12 @@ app.post('/api/download', async (req, res) => {
     
     // Criar job na queue
     const jobId = Date.now().toString();
+    
+    if (!downloadQueue) {
+      logger.error('Queue não está disponível');
+      return res.status(500).json({ error: 'Serviço de download não disponível' });
+    }
+    
     const job = await downloadQueue.add({ url, jobId });
     
     logger.info(`Job criado: ${jobId} para URL: ${url}`);
@@ -157,6 +243,10 @@ app.get('/api/status/:jobId', async (req, res) => {
   const { jobId } = req.params;
   
   try {
+    if (!redisClient || !redisClient.isOpen) {
+      return res.status(500).json({ error: 'Serviço temporariamente indisponível' });
+    }
+    
     const result = await redisClient.get(`download:${jobId}`);
     
     if (!result) {
@@ -211,15 +301,47 @@ setInterval(() => {
   });
 }, 60 * 60 * 1000); // 1 hora
 
-// Iniciar servidor
-app.listen(PORT, () => {
-  logger.info(`Servidor rodando na porta ${PORT}`);
-});
+// Inicializar servidor
+async function startServer() {
+  try {
+    // Inicializar Redis primeiro
+    const redisOk = await initializeRedis();
+    
+    if (!redisOk) {
+      logger.warn('Redis não conectou, mas servidor continuará sem cache');
+    }
+    
+    // Configurar queue se Redis estiver disponível
+    if (redisClient && redisClient.isOpen) {
+      await setupQueue();
+    }
+    
+    // Iniciar servidor
+    app.listen(PORT, () => {
+      logger.info(`Servidor rodando na porta ${PORT}`);
+    });
+    
+  } catch (error) {
+    logger.error('Erro ao iniciar servidor:', error);
+    process.exit(1);
+  }
+}
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   logger.info('Recebido SIGTERM, fechando servidor...');
-  await downloadQueue.close();
-  await redisClient.quit();
+  try {
+    if (downloadQueue) {
+      await downloadQueue.close();
+    }
+    if (redisClient && redisClient.isOpen) {
+      await redisClient.quit();
+    }
+  } catch (error) {
+    logger.error('Erro no shutdown:', error);
+  }
   process.exit(0);
 });
+
+// Iniciar aplicação
+startServer();
