@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioDrop - Baixar Áudio MP3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .loading {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
+            <div class="text-center mb-6">
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">AudioDrop</h1>
+                <p class="text-gray-600">Baixe áudio MP3 de vídeos online</p>
+            </div>
+
+            <form id="downloadForm" class="space-y-4">
+                <div>
+                    <label for="url" class="block text-sm font-medium text-gray-700 mb-2">
+                        URL do vídeo
+                    </label>
+                    <input 
+                        type="url" 
+                        id="url" 
+                        name="url" 
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        required
+                    >
+                </div>
+
+                <button 
+                    type="submit" 
+                    id="downloadBtn"
+                    class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <span id="btnText">Baixar MP3</span>
+                    <div id="loadingSpinner" class="loading border-2 border-white border-t-transparent rounded-full w-4 h-4 mx-auto hidden"></div>
+                </button>
+            </form>
+
+            <div id="status" class="mt-6 hidden">
+                <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+                    <div class="flex items-center">
+                        <div class="loading border-2 border-blue-600 border-t-transparent rounded-full w-4 h-4 mr-3"></div>
+                        <span class="text-blue-800">Processando...</span>
+                    </div>
+                    <div class="mt-2 text-sm text-blue-600">
+                        Isso pode levar alguns segundos...
+                    </div>
+                </div>
+            </div>
+
+            <div id="result" class="mt-6 hidden">
+                <div class="bg-green-50 border border-green-200 rounded-md p-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-green-800 font-medium">Pronto!</span>
+                        <button 
+                            id="downloadLink"
+                            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
+                        >
+                            Download
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="error" class="mt-6 hidden">
+                <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="text-red-800" id="errorMessage">Erro ao processar</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-md mx-auto mt-8 text-center text-sm text-gray-500">
+            <p>⚠️ Use apenas com conteúdo que você tem direito de baixar</p>
+        </div>
+    </div>
+
+    <script>
+        class AudioDropApp {
+            constructor() {
+                this.form = document.getElementById('downloadForm');
+                this.urlInput = document.getElementById('url');
+                this.downloadBtn = document.getElementById('downloadBtn');
+                this.btnText = document.getElementById('btnText');
+                this.loadingSpinner = document.getElementById('loadingSpinner');
+                this.statusDiv = document.getElementById('status');
+                this.resultDiv = document.getElementById('result');
+                this.errorDiv = document.getElementById('error');
+                this.downloadLink = document.getElementById('downloadLink');
+                this.errorMessage = document.getElementById('errorMessage');
+                
+                this.currentJobId = null;
+                this.statusInterval = null;
+                
+                this.init();
+            }
+
+            init() {
+                this.form.addEventListener('submit', this.handleSubmit.bind(this));
+            }
+
+            async handleSubmit(e) {
+                e.preventDefault();
+                
+                const url = this.urlInput.value.trim();
+                if (!url) return;
+
+                this.setLoading(true);
+                this.hideAllMessages();
+
+                try {
+                    const response = await fetch('/api/download', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ url }),
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Erro na requisição');
+                    }
+
+                    this.currentJobId = data.jobId;
+                    this.showStatus();
+                    this.startStatusCheck();
+
+                } catch (error) {
+                    this.showError(error.message);
+                    this.setLoading(false);
+                }
+            }
+
+            async checkStatus() {
+                if (!this.currentJobId) return;
+
+                try {
+                    const response = await fetch(`/api/status/${this.currentJobId}`);
+                    const data = await response.json();
+
+                    if (data.status === 'completed') {
+                        this.showResult(data.file);
+                        this.stopStatusCheck();
+                        this.setLoading(false);
+                    } else if (data.status === 'failed') {
+                        this.showError(data.error || 'Erro no processamento');
+                        this.stopStatusCheck();
+                        this.setLoading(false);
+                    }
+                    // Se ainda está processando, continua verificando
+
+                } catch (error) {
+                    this.showError('Erro ao verificar status');
+                    this.stopStatusCheck();
+                    this.setLoading(false);
+                }
+            }
+
+            startStatusCheck() {
+                this.statusInterval = setInterval(() => {
+                    this.checkStatus();
+                }, 2000); // Verifica a cada 2 segundos
+            }
+
+            stopStatusCheck() {
+                if (this.statusInterval) {
+                    clearInterval(this.statusInterval);
+                    this.statusInterval = null;
+                }
+            }
+
+            setLoading(loading) {
+                this.downloadBtn.disabled = loading;
+                
+                if (loading) {
+                    this.btnText.classList.add('hidden');
+                    this.loadingSpinner.classList.remove('hidden');
+                } else {
+                    this.btnText.classList.remove('hidden');
+                    this.loadingSpinner.classList.add('hidden');
+                }
+            }
+
+            showStatus() {
+                this.hideAllMessages();
+                this.statusDiv.classList.remove('hidden');
+            }
+
+            showResult(filename) {
+                this.hideAllMessages();
+                this.resultDiv.classList.remove('hidden');
+                
+                const fileName = filename.split('/').pop();
+                this.downloadLink.onclick = () => {
+                    window.open(`/api/download/${fileName}`, '_blank');
+                };
+            }
+
+            showError(message) {
+                this.hideAllMessages();
+                this.errorMessage.textContent = message;
+                this.errorDiv.classList.remove('hidden');
+            }
+
+            hideAllMessages() {
+                this.statusDiv.classList.add('hidden');
+                this.resultDiv.classList.add('hidden');
+                this.errorDiv.classList.add('hidden');
+            }
+        }
+
+        // Inicializar a aplicação
+        document.addEventListener('DOMContentLoaded', () => {
+            new AudioDropApp();
+        });
+    </script>
+</body>
+</html>
