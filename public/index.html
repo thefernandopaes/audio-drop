@@ -250,6 +250,7 @@
 
                 this.setLoading(true);
                 this.hideAllMessages();
+                this.showStatus();
 
                 try {
                     const response = await fetch('/api/download', {
@@ -260,15 +261,39 @@
                         body: JSON.stringify({ url }),
                     });
 
-                    const data = await response.json();
-
                     if (!response.ok) {
-                        throw new Error(data.error || 'Erro na requisição');
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Erro na requisição');
                     }
 
-                    this.currentJobId = data.jobId;
-                    this.showStatus();
-                    this.startStatusCheck();
+                    // Download direto
+                    const blob = await response.blob();
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    
+                    // Extrair nome do arquivo do header ou usar padrão
+                    const contentDisposition = response.headers.get('content-disposition');
+                    let filename = 'audio.mp3';
+                    
+                    if (contentDisposition) {
+                        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                        if (filenameMatch) {
+                            filename = filenameMatch[1];
+                        }
+                    }
+                    
+                    // Criar link temporário e fazer download
+                    const a = document.createElement('a');
+                    a.href = downloadUrl;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    
+                    // Limpar URL temporária
+                    window.URL.revokeObjectURL(downloadUrl);
+                    
+                    this.showSuccess();
+                    this.setLoading(false);
 
                 } catch (error) {
                     this.showError(error.message);
@@ -332,14 +357,12 @@
                 this.statusDiv.classList.remove('hidden');
             }
 
-            showResult(filename) {
+            showSuccess() {
                 this.hideAllMessages();
                 this.resultDiv.classList.remove('hidden');
                 
-                const fileName = filename.split('/').pop();
-                this.downloadLink.onclick = () => {
-                    window.open(`/api/download/${fileName}`, '_blank');
-                };
+                // Não precisa mais de botão, o download já aconteceu
+                this.downloadLink.style.display = 'none';
             }
 
             showError(message) {
