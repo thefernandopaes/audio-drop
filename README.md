@@ -1,80 +1,80 @@
 # AudioDrop
 
-Aplicação web para extração de áudio MP3 de vídeos online.
+Web application for extracting MP3 audio from online videos.
 
-## 🚀 Funcionalidades
+## 🚀 Features
 
-- Extração de áudio MP3 de vídeos do YouTube e outros sites
-- Interface minimalista e responsiva
-- Sistema de queue para processar downloads
-- Cache Redis para otimizar performance
-- Rate limiting para evitar sobrecarga
-- Limpeza automática de arquivos temporários
+- MP3 audio extraction from YouTube videos and other sites
+- Minimalist and responsive interface
+- Queue system for processing downloads
+- Redis cache for performance optimization
+- Rate limiting to prevent overload
+- Automatic cleanup of temporary files
 
-## 🛠️ Stack Tecnológica
+## 🛠️ Tech Stack
 
 **Frontend:**
-- HTML5 + CSS3 + JavaScript Vanilla
+- HTML5 + CSS3 + Vanilla JavaScript
 - Tailwind CSS
-- Interface responsiva
+- Responsive interface
 
 **Backend:**
 - Node.js + Express
-- Redis (cache e queue)
-- Bull (gerenciamento de filas)
-- yt-dlp (extração de áudio)
+- Redis (cache and queue)
+- Bull (queue management)
+- yt-dlp (audio extraction)
 - Winston (logs)
 
-## 📦 Instalação
+## 📦 Installation
 
-### Pré-requisitos
+### Prerequisites
 - Node.js 18+
 - Redis
 - Python 3 + pip
 - FFmpeg
 
-### Configuração Local
+### Local Setup
 
-1. **Clone o repositório:**
+1. **Clone the repository:**
    ```bash
-   git clone https://github.com/seu-usuario/audiodrop.git
+   git clone https://github.com/your-username/audiodrop.git
    cd audiodrop
    ```
 
-2. **Instale as dependências:**
+2. **Install dependencies:**
    ```bash
    npm install
    ```
 
-3. **Instale yt-dlp:**
+3. **Install yt-dlp:**
    ```bash
    pip install yt-dlp
    ```
 
-4. **Configure as variáveis de ambiente:**
+4. **Configure environment variables:**
    ```bash
    cp .env.example .env
    ```
 
-5. **Inicie o Redis:**
+5. **Start Redis:**
    ```bash
    redis-server
    ```
 
-6. **Execute a aplicação:**
+6. **Run the application:**
    ```bash
    npm run dev
    ```
 
-## 🚀 Deploy
+## 🚀 Deployment
 
 ### Railway
 
-1. Conecte seu repositório ao Railway
-2. Configure as variáveis de ambiente:
+1. Connect your repository to Railway
+2. Configure environment variables:
    - `REDIS_URL`
    - `PORT`
-3. Deploy automático
+3. Automatic deployment
 
 ### Docker
 
@@ -86,7 +86,7 @@ docker run -p 3000:3000 audiodrop
 ## 📝 API Endpoints
 
 ### POST /api/download
-Inicia o download de um vídeo.
+Starts downloading a video.
 
 **Body:**
 ```json
@@ -100,12 +100,12 @@ Inicia o download de um vídeo.
 {
   "jobId": "1234567890",
   "status": "processing",
-  "message": "Download iniciado..."
+  "message": "Download started..."
 }
 ```
 
 ### GET /api/status/:jobId
-Verifica o status do download.
+Checks download status.
 
 **Response:**
 ```json
@@ -117,22 +117,22 @@ Verifica o status do download.
 ```
 
 ### GET /api/download/:filename
-Baixa o arquivo de áudio.
+Downloads the audio file.
 
-## ⚠️ Importante
+## ⚠️ Important
 
-- Use apenas com conteúdo que você tem direito de baixar
-- Respeite os termos de uso dos sites
-- Esta ferramenta é para uso educacional e pessoal
+- Only use with content you have the right to download
+- Respect the terms of use of websites
+- This tool is for educational and personal use
 
-## 🤝 Contribuição
+## 🤝 Contributing
 
-1. Fork o projeto
-2. Crie uma branch para sua feature
-3. Commit suas mudanças
-4. Push para a branch
-5. Abra um Pull Request
+1. Fork the project
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
 
-## 📄 Licença
+## 📄 License
 
-MIT License - veja o arquivo LICENSE para detalhes.
+MIT License - see LICENSE file for details.

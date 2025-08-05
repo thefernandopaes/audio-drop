@@ -1,9 +1,65 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AudioDrop - Baixar Áudio MP3</title>
+    
+    <!-- SEO Meta Tags -->
+    <title>AudioDrop - Download MP3 Audio from Videos</title>
+    <meta name="description" content="Transform videos into MP3 audio instantly. Download high-quality MP3 files from YouTube, Vimeo, SoundCloud and more. Free, fast, and secure audio extraction.">
+    <meta name="keywords" content="mp3 download, audio extractor, youtube to mp3, video to audio, audio converter, online audio download">
+    <meta name="author" content="AudioDrop">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://audiodrop.app/">
+    <meta property="og:title" content="AudioDrop - Download MP3 Audio from Videos">
+    <meta property="og:description" content="Transform videos into MP3 audio instantly. Download high-quality MP3 files from YouTube, Vimeo, SoundCloud and more.">
+    <meta property="og:image" content="https://audiodrop.app/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:site_name" content="AudioDrop">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://audiodrop.app/">
+    <meta property="twitter:title" content="AudioDrop - Download MP3 Audio from Videos">
+    <meta property="twitter:description" content="Transform videos into MP3 audio instantly. Download high-quality MP3 files from YouTube, Vimeo, SoundCloud and more.">
+    <meta property="twitter:image" content="https://audiodrop.app/og-image.png">
+    
+    <!-- Additional SEO -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="msapplication-TileColor" content="#667eea">
+    <link rel="canonical" href="https://audiodrop.app/">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="https://cdn.tailwindcss.com" as="script">
+    <link rel="dns-prefetch" href="//cdn.tailwindcss.com">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "AudioDrop",
+        "description": "Transform videos into MP3 audio instantly",
+        "url": "https://audiodrop.app/",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "author": {
+            "@type": "Organization",
+            "name": "AudioDrop"
+        }
+    }
+    </script>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -49,6 +105,27 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
+        
+        /* Lazy loading styles */
+        .lazy-load {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        
+        .lazy-load.loaded {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Performance optimizations */
+        .will-change-transform {
+            will-change: transform;
+        }
+        
+        .will-change-opacity {
+            will-change: opacity;
+        }
     </style>
 </head>
 <body class="gradient-bg min-h-screen">
@@ -61,7 +138,7 @@
                 </svg>
             </div>
             <h1 class="text-4xl font-bold text-white mb-2">AudioDrop</h1>
-            <p class="text-indigo-100 text-lg">Transforme vídeos em áudio MP3 instantaneamente</p>
+            <p class="text-indigo-100 text-lg">Transform videos into MP3 audio instantly</p>
         </div>
 
         <!-- Main Card -->
@@ -73,7 +150,7 @@
                             <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
                             </svg>
-                            Cole a URL do vídeo
+                            Paste the video URL
                         </div>
                     </label>
                     <div class="relative">
@@ -84,6 +161,8 @@
                             placeholder="https://www.youtube.com/watch?v=..."
                             class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 input-glow transition-all duration-300 pr-12"
                             required
+                            autocomplete="url"
+                            aria-describedby="url-help"
                         >
                         <div class="absolute inset-y-0 right-0 flex items-center pr-3">
                             <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,37 +170,39 @@
                             </svg>
                         </div>
                     </div>
+                    <p id="url-help" class="text-xs text-gray-500 mt-1">Supports YouTube, Vimeo, SoundCloud and more</p>
                 </div>
 
                 <button 
                     type="submit" 
                     id="downloadBtn"
                     class="w-full btn-gradient text-white py-4 px-6 rounded-xl font-semibold text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    aria-describedby="download-status"
                 >
                     <div class="flex items-center justify-center gap-3">
                         <svg id="downloadIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
-                        <span id="btnText">Baixar MP3</span>
+                        <span id="btnText">Download MP3</span>
                         <div id="loadingSpinner" class="animate-spin border-2 border-white border-t-transparent rounded-full w-6 h-6 hidden"></div>
                     </div>
                 </button>
             </form>
 
             <!-- Status Messages -->
-            <div id="status" class="mt-6 hidden animate-slide-up">
+            <div id="status" class="mt-6 hidden animate-slide-up" role="status" aria-live="polite">
                 <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-indigo-500 rounded-lg p-4">
                     <div class="flex items-center">
                         <div class="animate-spin border-2 border-indigo-600 border-t-transparent rounded-full w-5 h-5 mr-3"></div>
                         <div>
-                            <p class="text-indigo-800 font-medium">Processando seu áudio...</p>
-                            <p class="text-indigo-600 text-sm mt-1">Extraindo o melhor áudio possível ✨</p>
+                            <p class="text-indigo-800 font-medium">Processing your audio...</p>
+                            <p class="text-indigo-600 text-sm mt-1">Extracting the best possible audio ✨</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div id="result" class="mt-6 hidden animate-slide-up">
+            <div id="result" class="mt-6 hidden animate-slide-up" role="status" aria-live="polite">
                 <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-lg p-4">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
@@ -131,9 +212,9 @@
                                 </svg>
                             </div>
                             <div>
-                                <p class="text-green-800 font-semibold">Pronto para download!</p>
-                                <p class="text-green-600 text-sm">Seu áudio MP3 foi baixado com sucesso 🎵</p>
-                                <p class="text-green-500 text-xs mt-1">Cole outra URL para baixar mais áudios!</p>
+                                <p class="text-green-800 font-semibold">Ready for download!</p>
+                                <p class="text-green-600 text-sm">Your MP3 audio was downloaded successfully 🎵</p>
+                                <p class="text-green-500 text-xs mt-1">Paste another URL to download more audio!</p>
                             </div>
                         </div>
                         <button 
@@ -151,7 +232,7 @@
                 </div>
             </div>
 
-            <div id="error" class="mt-6 hidden animate-slide-up">
+            <div id="error" class="mt-6 hidden animate-slide-up" role="alert" aria-live="assertive">
                 <div class="bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-500 rounded-lg p-4">
                     <div class="flex items-center">
                         <div class="bg-red-100 rounded-full p-2 mr-3">
@@ -160,24 +241,24 @@
                             </svg>
                         </div>
                         <div>
-                            <p class="text-red-800 font-medium">Ops! Algo deu errado</p>
-                            <p class="text-red-600 text-sm mt-1" id="errorMessage">Tente novamente em alguns segundos</p>
+                            <p class="text-red-800 font-medium">Oops! Something went wrong</p>
+                            <p class="text-red-600 text-sm mt-1" id="errorMessage">Try again in a few seconds</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Features -->
-        <div class="max-w-4xl mx-auto mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Features - Lazy Loaded -->
+        <div class="max-w-4xl mx-auto mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 lazy-load" data-lazy="features">
             <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 text-center text-white">
                 <div class="inline-flex items-center justify-center w-12 h-12 bg-white/20 rounded-full mb-4">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                     </svg>
                 </div>
-                <h3 class="font-semibold mb-2">Super Rápido</h3>
-                <p class="text-sm text-indigo-100">Converte vídeos em segundos</p>
+                <h3 class="font-semibold mb-2">Super Fast</h3>
+                <p class="text-sm text-indigo-100">Converts videos in seconds</p>
             </div>
             
             <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 text-center text-white">
@@ -186,8 +267,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                 </div>
-                <h3 class="font-semibold mb-2">Alta Qualidade</h3>
-                <p class="text-sm text-indigo-100">Áudio MP3 cristalino</p>
+                <h3 class="font-semibold mb-2">High Quality</h3>
+                <p class="text-sm text-indigo-100">Crystal clear MP3 audio</p>
             </div>
             
             <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 text-center text-white">
@@ -196,23 +277,68 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                     </svg>
                 </div>
-                <h3 class="font-semibold mb-2">100% Seguro</h3>
-                <p class="text-sm text-indigo-100">Seus dados protegidos</p>
+                <h3 class="font-semibold mb-2">100% Safe</h3>
+                <p class="text-sm text-indigo-100">Your data protected</p>
             </div>
         </div>
 
-        <!-- Footer -->
-        <div class="max-w-md mx-auto mt-12 text-center text-white/80">
+        <!-- Footer - Lazy Loaded -->
+        <div class="max-w-md mx-auto mt-12 text-center text-white/80 lazy-load" data-lazy="footer">
             <div class="bg-white/10 backdrop-blur-md rounded-xl p-4 mb-4">
-                <p class="text-sm font-medium">📊 Estatísticas</p>
-                <p class="text-lg font-bold" id="downloadCounter">🎵 Downloads realizados: <span id="countNumber">Carregando...</span></p>
+                <p class="text-sm font-medium">📊 Statistics</p>
+                <p class="text-lg font-bold" id="downloadCounter">🎵 Downloads completed: <span id="countNumber">Loading...</span></p>
             </div>
-            <p class="text-sm">⚠️ Use apenas com conteúdo que você tem direito de baixar</p>
-            <p class="text-xs mt-2 text-white/60">Funciona com YouTube, Vimeo, SoundCloud e muito mais</p>
+            <p class="text-sm">⚠️ Only use with content you have the right to download</p>
+            <p class="text-xs mt-2 text-white/60">Works with YouTube, Vimeo, SoundCloud and much more</p>
         </div>
     </div>
 
+    <!-- Load i18n system -->
+    <script src="/js/i18n.js"></script>
+    
     <script>
+        // Lazy Loading Implementation
+        class LazyLoader {
+            constructor() {
+                this.observer = null;
+                this.init();
+            }
+
+            init() {
+                if ('IntersectionObserver' in window) {
+                    this.observer = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                this.loadElement(entry.target);
+                            }
+                        });
+                    }, {
+                        rootMargin: '50px 0px',
+                        threshold: 0.1
+                    });
+
+                    // Observe all lazy elements
+                    document.querySelectorAll('[data-lazy]').forEach(el => {
+                        this.observer.observe(el);
+                    });
+                } else {
+                    // Fallback for older browsers
+                    this.loadAllElements();
+                }
+            }
+
+            loadElement(element) {
+                element.classList.add('loaded');
+                this.observer?.unobserve(element);
+            }
+
+            loadAllElements() {
+                document.querySelectorAll('[data-lazy]').forEach(el => {
+                    el.classList.add('loaded');
+                });
+            }
+        }
+
         class AudioDropApp {
             constructor() {
                 this.form = document.getElementById('downloadForm');
@@ -230,22 +356,29 @@
                 
                 this.currentJobId = null;
                 this.statusInterval = null;
+                this.i18n = null;
                 
                 this.init();
             }
 
             init() {
+                // Initialize i18n
+                this.i18n = new I18n();
+                
+                // Initialize lazy loading
+                new LazyLoader();
+                
                 this.form.addEventListener('submit', this.handleSubmit.bind(this));
                 
-                // Carregar contador inicial
+                // Load initial counter
                 this.loadDownloadCount();
                 
-                // Atualizar contador a cada 30 segundos
+                // Update counter every 30 seconds
                 setInterval(() => {
                     this.loadDownloadCount();
                 }, 30000);
                 
-                // Adicionar efeitos visuais ao input
+                // Add visual effects to input
                 this.urlInput.addEventListener('paste', () => {
                     setTimeout(() => {
                         this.urlInput.style.borderColor = '#10b981';
@@ -253,6 +386,24 @@
                             this.urlInput.style.borderColor = '';
                         }, 1000);
                     }, 100);
+                });
+
+                // Performance optimization: Preload critical resources
+                this.preloadCriticalResources();
+            }
+
+            preloadCriticalResources() {
+                // Preload API endpoints that might be needed
+                const preloadLinks = [
+                    '/api/stats',
+                    '/api/download'
+                ];
+
+                preloadLinks.forEach(url => {
+                    const link = document.createElement('link');
+                    link.rel = 'prefetch';
+                    link.href = url;
+                    document.head.appendChild(link);
                 });
             }
 
@@ -287,14 +438,14 @@
 
                     if (!response.ok) {
                         const errorData = await response.json();
-                        throw new Error(errorData.error || 'Erro na requisição');
+                        throw new Error(errorData.error || this.i18n.t('requestError'));
                     }
 
-                    // Download direto
+                    // Direct download
                     const blob = await response.blob();
                     const downloadUrl = window.URL.createObjectURL(blob);
                     
-                    // Extrair nome do arquivo do header ou usar padrão
+                    // Extract filename from header or use default
                     const contentDisposition = response.headers.get('content-disposition');
                     let filename = 'audio.mp3';
                     
@@ -305,7 +456,7 @@
                         }
                     }
                     
-                    // Criar link temporário e fazer download
+                    // Create temporary link and download
                     const a = document.createElement('a');
                     a.href = downloadUrl;
                     a.download = filename;
@@ -313,17 +464,17 @@
                     a.click();
                     document.body.removeChild(a);
                     
-                    // Limpar URL temporária
+                    // Clean up temporary URL
                     window.URL.revokeObjectURL(downloadUrl);
                     
                     this.showSuccess();
                     this.setLoading(false);
                     
-                    // RESETAR O INPUT
+                    // RESET INPUT
                     this.urlInput.value = '';
                     this.urlInput.focus();
                     
-                    // Atualizar contador
+                    // Update counter
                     this.loadDownloadCount();
 
                 } catch (error) {
@@ -344,13 +495,13 @@
                         this.stopStatusCheck();
                         this.setLoading(false);
                     } else if (data.status === 'failed') {
-                        this.showError(data.error || 'Erro no processamento');
+                        this.showError(data.error || this.i18n.t('processingError'));
                         this.stopStatusCheck();
                         this.setLoading(false);
                     }
 
                 } catch (error) {
-                    this.showError('Erro ao verificar status');
+                    this.showError(this.i18n.t('statusCheckError'));
                     this.stopStatusCheck();
                     this.setLoading(false);
                 }
@@ -373,11 +524,11 @@
                 this.downloadBtn.disabled = loading;
                 
                 if (loading) {
-                    this.btnText.textContent = 'Processando...';
+                    this.btnText.textContent = this.i18n.t('processingButton');
                     this.downloadIcon.classList.add('hidden');
                     this.loadingSpinner.classList.remove('hidden');
                 } else {
-                    this.btnText.textContent = 'Baixar MP3';
+                    this.btnText.textContent = this.i18n.t('downloadButton');
                     this.downloadIcon.classList.remove('hidden');
                     this.loadingSpinner.classList.add('hidden');
                 }
@@ -392,7 +543,7 @@
                 this.hideAllMessages();
                 this.resultDiv.classList.remove('hidden');
                 
-                // Não precisa mais de botão, o download já aconteceu
+                // No need for button anymore, download already happened
                 this.downloadLink.style.display = 'none';
             }
 
@@ -409,7 +560,7 @@
             }
         }
 
-        // Inicializar a aplicação
+        // Initialize the application
         document.addEventListener('DOMContentLoaded', () => {
             new AudioDropApp();
         });
