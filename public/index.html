@@ -293,8 +293,7 @@
         </div>
     </div>
 
-    <!-- Load i18n system -->
-    <script src="/js/i18n.js"></script>
+    <!-- Simplified without i18n -->
     
     <script>
         // Lazy Loading Implementation
@@ -356,15 +355,11 @@
                 
                 this.currentJobId = null;
                 this.statusInterval = null;
-                this.i18n = null;
                 
                 this.init();
             }
 
             init() {
-                // Initialize i18n
-                this.i18n = new I18n();
-                
                 // Initialize lazy loading
                 new LazyLoader();
                 
@@ -438,7 +433,7 @@
 
                     if (!response.ok) {
                         const errorData = await response.json();
-                        throw new Error(errorData.error || this.i18n.t('requestError'));
+                        throw new Error(errorData.error || 'Request error');
                     }
 
                     // Direct download
@@ -495,13 +490,13 @@
                         this.stopStatusCheck();
                         this.setLoading(false);
                     } else if (data.status === 'failed') {
-                        this.showError(data.error || this.i18n.t('processingError'));
+                        this.showError(data.error || 'Processing error');
                         this.stopStatusCheck();
                         this.setLoading(false);
                     }
 
                 } catch (error) {
-                    this.showError(this.i18n.t('statusCheckError'));
+                    this.showError('Error checking status');
                     this.stopStatusCheck();
                     this.setLoading(false);
                 }
@@ -524,11 +519,11 @@
                 this.downloadBtn.disabled = loading;
                 
                 if (loading) {
-                    this.btnText.textContent = this.i18n.t('processingButton');
+                    this.btnText.textContent = 'Processing...';
                     this.downloadIcon.classList.add('hidden');
                     this.loadingSpinner.classList.remove('hidden');
                 } else {
-                    this.btnText.textContent = this.i18n.t('downloadButton');
+                    this.btnText.textContent = 'Download MP3';
                     this.downloadIcon.classList.remove('hidden');
                     this.loadingSpinner.classList.add('hidden');
                 }
