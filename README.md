@@ -3,7 +3,7 @@
 Web application for extracting MP3 audio from online videos.
 https://audio-drop-production.up.railway.app/
 
-## 🚀 Features
+## Features
 
 - MP3 audio extraction from YouTube videos and other sites
 - Minimalist and responsive interface
@@ -12,7 +12,7 @@ https://audio-drop-production.up.railway.app/
 - Rate limiting to prevent overload
 - Automatic cleanup of temporary files
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 **Frontend:**
 - HTML5 + CSS3 + Vanilla JavaScript
@@ -26,7 +26,7 @@ https://audio-drop-production.up.railway.app/
 - yt-dlp (audio extraction)
 - Winston (logs)
 
-## 📦 Installation
+## Installation
 
 ### Prerequisites
 - Node.js 18+
@@ -84,7 +84,7 @@ docker build -t audiodrop .
 docker run -p 3000:3000 audiodrop
 ```
 
-## 📝 API Endpoints
+## API Endpoints
 
 ### POST /api/download
 Starts downloading a video.
